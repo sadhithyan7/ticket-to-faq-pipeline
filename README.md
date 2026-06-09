@@ -8,8 +8,8 @@ This project processes support tickets, clusters them by theme, and uses an LLM 
 - **Team Members**:
   - [Adhithyan S]
   - [Hariharan K]
-  - [Abirami ] 
-  - [Kalpana] 
+  - [Abirami B] 
+  - [Kalpana L] 
 
 
 ## Architecture Overview
