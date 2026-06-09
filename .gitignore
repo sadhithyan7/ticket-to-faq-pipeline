@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+drafts/
+tickets.sqlite
+uploads/
+.vscode/
+.DS_Store
+Thumbs.db

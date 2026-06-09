@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket → FAQ Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2>FAQ Pipeline</h2>
+                <button id="run-pipeline-btn" class="btn primary-btn pulse-btn">Run Pipeline</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="source-section">
+                    <h3>Source Data</h3>
+                    <div class="file-uploader-box" id="drop-zone">
+                        <label for="csv-file-input" class="file-label">
+                            <div class="upload-icon">📂</div>
+                            <div class="upload-text">Choose CSV File</div>
+                            <div class="upload-subtext">Drag & drop or click</div>
+                        </label>
+                        <input type="file" id="csv-file-input" accept=".csv" class="hidden-file-input">
+                        <div id="selected-file-info" class="file-info hidden">
+                            <span id="file-name-display" class="file-name">filename.csv</span>
+                            <button id="clear-file-btn" class="clear-btn" title="Remove custom file">&times;</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Generated Themes</h3>
+                <ul id="theme-list" class="theme-list">
+                    <!-- Dynamic list items will be injected here -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Panel -->
+        <main class="main-panel glass-panel">
+            <header class="content-header">
+                <h1 id="draft-title">Select a Theme</h1>
+                <div class="header-actions">
+                    <span id="draft-status" class="status-badge"></span>
+                    <button id="save-draft-btn" class="btn secondary-btn" disabled>Save Edits</button>
+                    <button id="approve-draft-btn" class="btn success-btn" disabled>Approve FAQ</button>
+                </div>
+            </header>
+            
+            <div class="editor-container hidden" id="editor-container">
+                <div class="tabs">
+                    <button class="tab-btn active" data-target="editor-view">Markdown Editor</button>
+                    <button class="tab-btn" data-target="preview-view">Live Preview</button>
+                </div>
+                
+                <div class="tab-content active" id="editor-view">
+                    <textarea id="markdown-editor" spellcheck="false"></textarea>
+                </div>
+                <div class="tab-content" id="preview-view">
+                    <div id="markdown-preview" class="markdown-body"></div>
+                </div>
+            </div>
+            
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">✨</div>
+                <p>Select a generated theme from the sidebar to review and approve the FAQ draft.</p>
+            </div>
+            
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p>Running AI Pipeline...</p>
+                <small>Clustering tickets and generating FAQs</small>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Simple Markdown Parser (marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
