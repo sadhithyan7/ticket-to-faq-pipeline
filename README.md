@@ -4,16 +4,13 @@ This project processes support tickets, clusters them by theme, and uses an LLM 
 
 ## Team Details
 
-- **Team Name**: [Your Team Name Here]
-- **Team Members & Resumes**:
-  - [Member 1 Name] - [Link to Resume PDF]
-  - [Member 2 Name] - [Link to Resume PDF]
-  - [Member 3 Name] - [Link to Resume PDF]
-  - [Member 4 Name] - [Link to Resume PDF]
+- **Team Name**: Techies
+- **Team Members**:
+  - [Adhithyan S]
+  - [Hariharan K]
+  - [Abirami ] 
+  - [Kalpana] 
 
-## Demo Video
-
-[Link to Demo Video]
 
 ## Architecture Overview
 
@@ -45,7 +42,7 @@ To run the API server:
 uvicorn src.api:app --reload
 ```
 
-## Assumptions & Limitations
+
 
 - The clustering algorithm requires a reasonable number of tickets to form meaningful groups.
 - The default setup relies on `groq` or `openrouter` free-tier API endpoints. Rate limits may apply.
