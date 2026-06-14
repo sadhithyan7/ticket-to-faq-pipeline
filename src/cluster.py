@@ -1,89 +1,69 @@
 import sqlite3
-import logging
-from typing import Dict, List, Tuple
-from collections import defaultdict
+import os
 
-# We import ML libraries dynamically inside functions or with try/except 
-# so we only load what we need based on the method
-from sklearn.cluster import KMeans
+DB_PATH = "tickets.sqlite"
 
-logger = logging.getLogger(__name__)
+def main():
+    if not os.path.exists(DB_PATH):
+        print(f"Database file '{DB_PATH}' does not exist yet. Please run the pipeline from the UI first to create and populate it.")
+        return
 
-def cluster_tickets(db_path: str, method: str, num_clusters: int) -> Dict[int, List[Dict]]:
-    """
-    Cluster tickets using either 'embeddings' or 'tfidf'.
-    Writes cluster_id back to DB and returns grouped tickets.
-    """
-    logger.info(f"Clustering with method={method}, num_clusters={num_clusters}")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+
+    print("=" * 60)
+    print("1. DATABASE TABLES")
+    print("=" * 60)
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    for table in tables:
+        print(f" - Table Name: {table[0]}")
+
+    print("\n" + "=" * 60)
+    print("2. SCHEMAS (PRAGMA table_info)")
+    print("=" * 60)
+    for table in tables:
+        table_name = table[0]
+        print(f"\nTable: {table_name}")
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns = cursor.fetchall()
+        print(f"{'ID':<4} | {'Column Name':<20} | {'Type':<12} | {'Not Null':<8} | {'PK':<4}")
+        print("-" * 60)
+        for col in columns:
+            # col: (cid, name, type, notnull, dflt_value, pk)
+            print(f"{col[0]:<4} | {col[1]:<20} | {col[2]:<12} | {col[3]:<8} | {col[5]:<4}")
+
+    print("\n" + "=" * 60)
+    print("3. DATA COUNTS & SAMPLES")
+    print("=" * 60)
     
-    cursor.execute("SELECT id, subject, description, resolution FROM tickets")
-    rows = cursor.fetchall()
+    # Tickets sample
+    cursor.execute("SELECT COUNT(*) FROM tickets;")
+    ticket_count = cursor.fetchone()[0]
+    print(f"Total Tickets: {ticket_count}")
     
-    if not rows:
-        logger.warning("No tickets to cluster.")
-        return {}
+    if ticket_count > 0:
+        print("\nSample Ticket Row:")
+        cursor.execute("SELECT id, subject, cluster_id FROM tickets LIMIT 1;")
+        row = cursor.fetchone()
+        print(f"  - ID: {row[0]}")
+        print(f"  - Subject: '{row[1]}'")
+        print(f"  - Cluster ID: {row[2]}")
         
-    tickets = [dict(r) for r in rows]
-    texts = [f"{t['subject']} {t['description']}" for t in tickets]
+    # Drafts sample
+    cursor.execute("SELECT COUNT(*) FROM drafts;")
+    draft_count = cursor.fetchone()[0]
+    print(f"Total FAQ Drafts: {draft_count}")
     
-    if method == "embeddings":
-        try:
-            from sentence_transformers import SentenceTransformer
-            logger.info("Loading SentenceTransformer model 'all-MiniLM-L6-v2'...")
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            embeddings = model.encode(texts)
-            X = embeddings
-        except ImportError:
-            logger.error("sentence-transformers is not installed. Falling back to tfidf.")
-            method = "tfidf"
-            
-    if method == "tfidf":
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        logger.info("Using TfidfVectorizer...")
-        vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-        X = vectorizer.fit_transform(texts)
-        
-    logger.info(f"Running KMeans with k={num_clusters}...")
-    kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init='auto')
-    labels = kmeans.fit_predict(X)
-    
-    clusters = defaultdict(list)
-    for i, ticket in enumerate(tickets):
-        cluster_id = int(labels[i])
-        ticket['cluster_id'] = cluster_id
-        clusters[cluster_id].append(ticket)
-        
-        # Write back to DB
-        cursor.execute("UPDATE tickets SET cluster_id = ? WHERE id = ?", (cluster_id, ticket['id']))
-        
-    conn.commit()
+    if draft_count > 0:
+        print("\nSample Draft FAQ Row:")
+        cursor.execute("SELECT id, theme, status FROM drafts LIMIT 1;")
+        row = cursor.fetchone()
+        print(f"  - ID: {row[0]}")
+        print(f"  - Theme: '{row[1]}'")
+        print(f"  - Status: '{row[2]}'")
+
     conn.close()
-    
-    logger.info("Clustering completed and saved to DB.")
-    return dict(clusters)
 
-def top_themes(clusters: Dict[int, List[Dict]], top_n: int) -> List[int]:
-    """Pick the largest clusters."""
-    cluster_sizes = [(cid, len(tickets)) for cid, tickets in clusters.items()]
-    cluster_sizes.sort(key=lambda x: x[1], reverse=True)
-    top_cluster_ids = [cid for cid, size in cluster_sizes[:top_n]]
-    logger.info(f"Top {top_n} themes identified: {top_cluster_ids}")
-    return top_cluster_ids
-
-def derive_theme_label(tickets: List[Dict]) -> str:
-    """Derive a short human theme label from a cluster of tickets using TF-IDF."""
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    texts = [f"{t['subject']} {t['description']}" for t in tickets]
-    
-    try:
-        vectorizer = TfidfVectorizer(stop_words='english', max_features=3)
-        vectorizer.fit(texts)
-        keywords = vectorizer.get_feature_names_out()
-        return " ".join(keywords).title()
-    except Exception as e:
-        # Fallback if too few words etc
-        logger.warning(f"Could not derive theme label: {e}")
-        return "General Issue"
+if __name__ == "__main__":
+    main()
